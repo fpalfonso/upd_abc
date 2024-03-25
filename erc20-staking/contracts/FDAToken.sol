@@ -7,7 +7,19 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract FDAToken is ERC20, Ownable {
     mapping(address => uint256) private _stakes;
     mapping(address => uint256) private _lastStakeTimestamp;
+    mapping(address => uint256) private withdrawalDeadline;
     uint256 private _rewardRate = 100;
+    bool public completed = false;
+
+    modifier withdrawalDeadlineReached( bool requireReached ) {
+        uint256 timeRemaining = withdrawalTimeLeft();
+        if( requireReached ) {
+            require(timeRemaining == 0, "Withdrawal period is not reached yet");
+        } else {
+            require(timeRemaining > 0, "Withdrawal period has been reached");
+        }
+        _;
+    }
 
     constructor(
         uint256 initialSupply,
@@ -21,15 +33,20 @@ contract FDAToken is ERC20, Ownable {
     }
 
     function stake(uint256 amount) public {
+        if (completed) { revert("Already staked"); }
+
+        withdrawalDeadline[msg.sender] = block.timestamp + 120 seconds;
+
         require(amount > 0, "Cannot stake 0 tokens");
         require(balanceOf(msg.sender) >= amount, "Insufficient balance");
 
         _stakes[msg.sender] += amount;
         _lastStakeTimestamp[msg.sender] = block.timestamp;
         _transfer(msg.sender, address(this), amount);
+        completed = true;
     }
 
-    function withdraw() public {
+    function withdraw() public withdrawalDeadlineReached(true)  {
         require(_stakes[msg.sender] > 0, "No staked tokens");
 
         uint256 stakedAmount = _stakes[msg.sender];
@@ -39,6 +56,7 @@ contract FDAToken is ERC20, Ownable {
         _stakes[msg.sender] = 0;
         _transfer(address(this), msg.sender, stakedAmount);
         _mint(msg.sender, reward);
+        completed = false;
     }
 
     function getStake(address account) public view returns (uint256) {
@@ -51,9 +69,16 @@ contract FDAToken is ERC20, Ownable {
         return reward;
     }
 
-    function getLastStakeTimestamp(
-        address account
-    ) public view returns (uint256) {
+    function getLastStakeTimestamp(address account) public view returns (uint256) {
         return _lastStakeTimestamp[account];
     }
+
+    function withdrawalTimeLeft() public view returns (uint256 _withdrawalTimeLeft) {
+        if( block.timestamp >= withdrawalDeadline[msg.sender]) {
+            return (0);
+        } else {
+            return (withdrawalDeadline[msg.sender] - block.timestamp);
+        }
+    }
+
 }

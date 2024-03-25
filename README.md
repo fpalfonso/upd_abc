@@ -7,8 +7,11 @@ Student Number: 2020-05690
 # Smart Contract
 The smart contract applied is an ERC20 staking contract.
 
-TO DO:
-- implement 2 minute time window to stake and withdraw. after the time window, should not be able to stake and withdraw
+1. Staking is a single-use action, meaning once we stake we cannot re-stake again
+2. Withdraws from the contract removes the entire principal balance and any accrued interest
+    - Can only withdraw after 2 minutes
 
-- after 4 minutes, you can withdraw 
+
+
+
 

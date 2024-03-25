@@ -88,9 +88,45 @@ const {
       
       it("Should not allow staking more tokens than the balance", async function () {
         const { cFDAToken, account2 } = await loadFixture(deploy);
-        await expect(cFDAToken.connect(account2).stake(2000000)).to.be.revertedWith(
-          "Insufficient balance"
-        );
+        await expect(cFDAToken.connect(account2).stake(2000000)).to.be.revertedWith("Insufficient balance");
+      });
+
+      it("Should not allow staking more than one time", async function () {
+        const { cFDAToken, account2 } = await loadFixture(deploy);
+        const amount = ethers.parseEther("100");
+        await cFDAToken["mint"](account2.address, amount);
+        await cFDAToken.connect(account2).stake(amount);
+
+        await cFDAToken["mint"](account2.address, amount);
+        await expect(cFDAToken.connect(account2).stake(amount)).to.be.revertedWith("Already staked");
+      });
+
+      it("should not allow withdrawing before 2 minutes", async function () {
+        const { cFDAToken, account2 } = await loadFixture(deploy);
+        const amount = ethers.parseEther("100");
+        await cFDAToken["mint"](account2.address, amount);
+        await cFDAToken.connect(account2).stake(amount);
+
+        await expect(cFDAToken.connect(account2).withdraw()).to.be.revertedWith("Withdrawal period is not reached yet");        
+      });
+
+      it("should be able to withdraw after 2 minutes", async function () {
+        const { cFDAToken, account2 } = await loadFixture(deploy);
+  
+        const amount = ethers.parseEther("100");
+        await cFDAToken["mint"](account2.address, amount);
+  
+        await cFDAToken.connect(account2).stake(amount);
+  
+        const TWO_MIN_IN_SEC = 2 * 60;
+        const unlockTime = (await time.latest()) + TWO_MIN_IN_SEC;
+  
+        await time.increaseTo(unlockTime);
+  
+        await cFDAToken.connect(account2).withdraw();
+  
+        const balance = await cFDAToken.balanceOf(account2);
+        console.log("balance", balance);
       });
     });
   });
