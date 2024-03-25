@@ -25,4 +25,14 @@ Successfully verified contract FDAToken on Sourcify.
 https://repo.sourcify.dev/contracts/full_match/421614/0x015811FBe271CCAeFA00250e3d6D9c33cB6A185A/
 ```
 
+# Staking App
+The contract is deployed in arbitrum Sepolia. Make sure to add the network in your MetaMask. The app has these following functions:
+1. Connect with your MetaMask wallet.
+2. Mint tokens
+3. Stake tokens
+4. Withdraw
+    - When trying to withdraw before 2 minutes after staking, an alert will pop up with the remaining seconds left.
+
+Note: I need to approve the transactions first. Inform me if you want to interact with the app in order to approve transactions.
+
 
