@@ -126,7 +126,59 @@ const {
         await cFDAToken.connect(account2).withdraw();
   
         const balance = await cFDAToken.balanceOf(account2);
-        console.log("balance", balance);
+        // console.log("balance", balance);
       });
+
+      it("the 2 minute countdown only starts when done staking", async function () {
+        const { cFDAToken, account2 } = await loadFixture(deploy);
+  
+        const ONE_HOUR_IN_SEC = 60 * 60;
+        const unlockTime1 = (await time.latest()) + ONE_HOUR_IN_SEC;
+  
+        await time.increaseTo(unlockTime1);
+
+        const amount = ethers.parseEther("100");
+        await cFDAToken["mint"](account2.address, amount);
+  
+        await cFDAToken.connect(account2).stake(amount);
+  
+        const TWO_MIN_IN_SEC = 2 * 60;
+        const unlockTime2 = (await time.latest()) + TWO_MIN_IN_SEC;
+  
+        await time.increaseTo(unlockTime2);
+  
+        await cFDAToken.connect(account2).withdraw();
+  
+        const balance = await cFDAToken.balanceOf(account2);
+        // console.log("balance", balance);
+      });
+
+      it("should be able to stake after withdrawing", async function () {
+        const { cFDAToken, account2 } = await loadFixture(deploy);
+  
+        const amount = ethers.parseEther("100");
+        await cFDAToken["mint"](account2.address, amount);
+  
+        await cFDAToken.connect(account2).stake(amount);
+  
+        const TWO_MIN_IN_SEC = 2 * 60;
+        const unlockTime1 = (await time.latest()) + TWO_MIN_IN_SEC;
+  
+        await time.increaseTo(unlockTime1);
+  
+        await cFDAToken.connect(account2).withdraw();
+  
+        await cFDAToken.connect(account2).stake(amount);
+
+
+        const unlockTime2 = (await time.latest()) + TWO_MIN_IN_SEC;
+        await time.increaseTo(unlockTime2);
+  
+        await cFDAToken.connect(account2).withdraw();
+  
+        const balance = await cFDAToken.balanceOf(account2);
+        // console.log("balance", balance);
+      });
+
     });
   });
