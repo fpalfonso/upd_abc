@@ -12,9 +12,6 @@
   let userAddress = '';
   let userTokenBalance = 0;
   $: updatedTokenBalance = userTokenBalance;
-  let withdrawalDeadline = 0;
-  let interval;
-  let FDAToken;
   let isStaked = false;
 
   const connectWallet = async () => {
@@ -22,13 +19,13 @@
     const provider = new ethers.BrowserProvider(ethereum);
     const account = await provider.send("eth_accounts", []);
     connected = true;
-    console.log(account);
+    // console.log(account);
 
     // get staking contract
     const signer = await provider.getSigner();
     const networkId = await provider.getNetwork().then((network: { chainId: any; }) => network.chainId);
     const contract = await initializeContract(signer);
-    console.log(contract);
+    // console.log(contract);
 
     // Get user's address and token balance
     userAddress = await signer.getAddress();
@@ -42,7 +39,7 @@
     const signer = await provider.getSigner();
     const contract = await initializeContract(signer);
     userTokenBalance = await contract.balanceOf(userAddress);
-    console.log("refreshed token balance");
+    // console.log("refreshed token balance");
   };
 
   const stakeTokens = async () => {
@@ -53,16 +50,16 @@
       const contract = await initializeContract(signer);
       const tx = await contract.stake(tokensToStake);
       await tx.wait(); // Wait for transaction to be mined
-      console.log("Staked", tokensToStake, "tokens");
+      // console.log("Staked", tokensToStake, "tokens");
       alert("Staked " + tokensToStake + " FDA tokens");
       isStaked = true;
 
       // Fetch and display token balance after successful stake
       await refreshUserTokenBalance();
       
-
+      tokensToStake = 0; // reset input
     } catch (error) {
-      console.log(error.reason);
+      // console.log(error.reason);
       alert(error.reason);
     }
   };
@@ -73,14 +70,18 @@
       const provider = new ethers.BrowserProvider(ethereum);
       const signer = await provider.getSigner();
       const contract = await initializeContract(signer);
+      const user = signer.getAddress();
+      let totalTokens = await contract.getStake(user);
+      totalTokens += await contract.getCurrentRewards(user);
+
       const tx = await contract.withdraw();
       await tx.wait(); // Wait for transaction to be mined
-      console.log("Withdrawn tokens");
-      alert("Withdrawn tokens");
+      // console.log("Withdrawn tokens");
+      alert("Amount of Withdrawn tokens: " + totalTokens);
       isStaked = false;
       await refreshUserTokenBalance();
     } catch (error) {
-      console.log(error.reason);
+      // console.log(error.reason);
       if (error.reason === "Withdrawal period is not reached yet") {
         const { ethereum } = window as any;
         const provider = new ethers.BrowserProvider(ethereum);
@@ -103,13 +104,13 @@
       
       const tx = await contract.mint(userAddress, tokensToMint);
       await tx.wait(); // Wait for transaction to be mined
-      console.log("Minted", tokensToMint, "tokens");
+      // console.log("Minted", tokensToMint, "tokens");
       alert("Minted " + tokensToMint + " tokens");
-      console.log(contract.signer);
+      // console.log(contract.signer);
       await refreshUserTokenBalance();
-      
+      tokensToMint = 0; // Reset input
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       alert(error.reason);
     }
   };
@@ -140,7 +141,7 @@
   {#if connected}
     <p>Connected to MetaMask</p>
     <p>User Address: {userAddress}</p>
-    <p>Your FDA Token Balance: {updatedTokenBalance}</p>
+    <p>Your FDAToken Balance: {updatedTokenBalance}</p>
 
     <!-- Minting Section -->
     <h2>Mint Tokens</h2>
