@@ -11,6 +11,10 @@ contract FDAToken is ERC20, Ownable {
     uint256 private _rewardRate = 100;
     bool public completed = false;
 
+    // events
+    event Staked(address indexed user, uint256 indexed amount);
+    event WithdrewStake(address indexed user, uint256 indexed amount);
+
     modifier withdrawalDeadlineReached( bool requireReached ) {
         uint256 timeRemaining = withdrawalTimeLeft();
         if( requireReached ) {
@@ -42,6 +46,7 @@ contract FDAToken is ERC20, Ownable {
 
         _stakes[msg.sender] += amount;
         _lastStakeTimestamp[msg.sender] = block.timestamp;
+        emit Staked(msg.sender, amount);
         _transfer(msg.sender, address(this), amount);
         completed = true;
     }
@@ -54,6 +59,7 @@ contract FDAToken is ERC20, Ownable {
             _rewardRate;
 
         _stakes[msg.sender] = 0;
+        emit WithdrewStake(msg.sender, reward+stakedAmount);
         _transfer(address(this), msg.sender, stakedAmount);
         _mint(msg.sender, reward);
         completed = false;
